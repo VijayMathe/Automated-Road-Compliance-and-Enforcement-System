@@ -283,7 +283,7 @@ import tempfile
 import cv2
 import time
 from utils import process_video
-from db_module import fetch_vehicle_details
+# from db_module import fetch_vehicle_details
 
 def main():
     st.title("Automated-Road-Compliance-and-Enforcement-System")
