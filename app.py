@@ -286,7 +286,7 @@ from utils import process_video
 from db_module import fetch_vehicle_details
 
 def main():
-    st.title("AI Powered Traffic Enforcement Platform")
+    st.title("Automated-Road-Compliance-and-Enforcement-System")
 
     mode = st.selectbox("Select Mode", ["Upload Video", "Real-Time Video"])
 
@@ -314,7 +314,7 @@ def main():
                 display_vehicle_details(results_csv)
 
 def display_vehicle_details(results_csv):
-    st.write("Vehicle Details:")
+    st.write("Vehicles Details:")
     df = pd.read_csv(results_csv)
     for car_id, group in df.groupby('car_id'):
         max_score_row = group.loc[group['license_number_score'].idxmax()]
@@ -324,8 +324,9 @@ def display_vehicle_details(results_csv):
         district = int(license_plate_number[2:4])
         series_char = license_plate_number[4:6]
         series_num = license_plate_number[6:]
-        vehicle_details = fetch_vehicle_details(state, district, series_char, series_num)
-        if not vehicle_details.empty:
+        # vehicle_details = fetch_vehicle_details(state, district, series_char, series_num)
+        # if not vehicle_details.empty:
+        if (0):
             today = datetime.now().date()
             has_fine = False
             for index, row in vehicle_details.iterrows():

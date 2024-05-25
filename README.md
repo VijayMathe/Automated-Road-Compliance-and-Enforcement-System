@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 **AI-powered Traffic Enforcement Platform**
 
 **Project Description:**
@@ -71,3 +72,6 @@ Piyush Waghulde
 Atharva Shinde  
 Bhushan Sangle  
 Om Wagh
+=======
+# Automated-Road-Compliance-and-Enforcement-System
+>>>>>>> 5bbd2090205c013f2ec65e6576b34969391ecda8
