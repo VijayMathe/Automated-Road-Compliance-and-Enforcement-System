@@ -275,58 +275,54 @@
 #     main()
 
 
-import streamlit as st
 import pandas as pd
-from twilio.rest import Client
 from datetime import datetime
 import tempfile
 import cv2
 import time
 from utils import process_video
-# from db_module import fetch_vehicle_details
 
 def main():
-    st.title("Automated-Road-Compliance-and-Enforcement-System")
+    print("Automated Road Compliance and Enforcement System")
+    
+    mode = input("Select Mode (Upload Video / Real-Time Video): ").strip().lower()
 
-    mode = st.selectbox("Select Mode", ["Upload Video", "Real-Time Video"])
-
-    if mode == "Upload Video":
-        uploaded_file = st.file_uploader("Upload a video file", type=["mp4", "avi"])
-        if uploaded_file is not None:
-            with st.spinner('Processing video...'):
-                results_csv = process_video(uploaded_file)
-            st.success("License plate details extracted successfully!")
-            st.write("Download the results CSV file:")
-            st.download_button(label="Download CSV", data=open(results_csv, 'rb').read(),
-                               file_name="license_plate_results.csv", mime="text/csv")
+    if mode == "upload video":
+        video_path = input("Enter the path to the video file: ").strip()
+        if video_path:
+            print('Processing video...')
+            results_csv = process_video(video_path)
+            print("License plate details extracted successfully!")
+            print("Results saved to:", results_csv)
             display_vehicle_details(results_csv)
-    elif mode == "Real-Time Video":
-        if st.button('Start Recording'):
-            st.warning("Recording will stop automatically after 20 seconds.")
+    elif mode == "real-time video":
+        record = input('Press Enter to start recording (Recording will stop automatically after 20 seconds): ').strip()
+        if record == '':
+            print("Recording...")
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
                 record_video(temp_video.name, 20)
-                with st.spinner('Processing video...'):
-                    results_csv = process_video(open(temp_video.name, "rb"))
-                st.success("License plate details extracted successfully!")
-                st.write("Download the results CSV file:")
-                st.download_button(label="Download CSV", data=open(results_csv, 'rb').read(),
-                                   file_name="license_plate_results.csv", mime="text/csv")
+                print('Processing video...')
+                results_csv = process_video(temp_video)
+                print("License plate details extracted successfully!")
+                print("Results saved to:", results_csv)
                 display_vehicle_details(results_csv)
+    else:
+        print("Invalid mode selected. Please choose either 'Upload Video' or 'Real-Time Video'.")
 
 def display_vehicle_details(results_csv):
-    st.write("Vehicles Details:")
+    print("Vehicle Details:")
     df = pd.read_csv(results_csv)
     for car_id, group in df.groupby('car_id'):
         max_score_row = group.loc[group['license_number_score'].idxmax()]
         license_plate_number = max_score_row['license_number']
-        st.write(f"License Plate Number: {license_plate_number}")
+        print(f"License Plate Number: {license_plate_number}")
         state = license_plate_number[:2]
         district = int(license_plate_number[2:4])
         series_char = license_plate_number[4:6]
         series_num = license_plate_number[6:]
         # vehicle_details = fetch_vehicle_details(state, district, series_char, series_num)
         # if not vehicle_details.empty:
-        if (0):
+        if (0):  # Simulate vehicle details fetch
             today = datetime.now().date()
             has_fine = False
             for index, row in vehicle_details.iterrows():
@@ -345,11 +341,11 @@ def display_vehicle_details(results_csv):
                     )
                     break
             if has_fine:
-                st.write("Fine For Not Having Active Insurance or PUC")
+                print("Fine For Not Having Active Insurance or PUC")
             else:
-                st.write("No fine detected for this vehicle.")
+                print("No fine detected for this vehicle.")
         else:
-            st.write("No details found for the provided license plate number.")
+            print("No details found for the provided license plate number.")
 
 def record_video(output_path, duration):
     cap = cv2.VideoCapture(0)

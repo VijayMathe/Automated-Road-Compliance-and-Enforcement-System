@@ -135,7 +135,16 @@ import string
 import easyocr
 import os
 import numpy as np
-import tempfile 
+import tempfile
+import os
+import shutil
+import numpy as np
+import tempfile
+from ultralytics import YOLO
+from sort.sort import Sort
+import cv2
+import string
+import easyocr
 
 reader = easyocr.Reader(['en'], gpu=False)
 
@@ -237,7 +246,7 @@ def get_car(license_plate, vehicle_track_ids):
 # Function to process the video
 import os
 
-def process_video(uploaded_file):
+def process_video(video_path):
     vehicles = [2, 3, 5, 7]
     results = {}
     mot_tracker = Sort()
@@ -246,10 +255,8 @@ def process_video(uploaded_file):
     temp_dir = tempfile.mkdtemp()
     temp_video_path = os.path.join(temp_dir, "temp_video.mp4")
     
-    # Save uploaded file to a temporary location
-    with open(temp_video_path, "wb") as f:
-        uploaded_file.seek(0)
-        f.write(uploaded_file.read())
+    # Copy the video file to the temporary location
+    shutil.copy(video_path, temp_video_path)
 
     # Create a VideoCapture object
     cap = cv2.VideoCapture(temp_video_path)
