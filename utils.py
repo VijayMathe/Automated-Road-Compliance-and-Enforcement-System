@@ -74,15 +74,16 @@ def get_car(license_plate, vehicle_track_ids):
 def process_video(video_path):
     vehicles = [2, 3, 5, 7]
     results = {}
-    mot_tracker = Sort()
+    highest_confidence_plates = {}
 
+    mot_tracker = Sort()
     temp_dir = tempfile.mkdtemp()
     temp_video_path = os.path.join(temp_dir, "temp_video.mp4")
     shutil.copy(video_path, temp_video_path)
 
     cap = cv2.VideoCapture(temp_video_path)
     fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Codec for the output video
-    out = cv2.VideoWriter('output_video2.mp4', fourcc, 30.0, (int(cap.get(3)), int(cap.get(4))))
+    out = cv2.VideoWriter('output_video3.mp4', fourcc, 30.0, (int(cap.get(3)), int(cap.get(4))))
 
     coco_model = YOLO('models/yolov8n.pt')
     licence_plate_detector = YOLO('models/LicencePlateModel.pt')
@@ -90,17 +91,17 @@ def process_video(video_path):
     frame_nmr = -1
     while True:
         frame_nmr += 1
-        if frame_nmr > 30:  # Limiting to 30 frames for demonstration purposes
-            break
         ret, frame = cap.read()
         if not ret:
             break
 
-        results[frame_nmr] = {}
-
         detections = coco_model(frame)[0]
         detections_ = [[x1, y1, x2, y2, score] for x1, y1, x2, y2, score, class_id in detections.boxes.data.tolist() if int(class_id) in vehicles]
-        track_ids = mot_tracker.update(np.asarray(detections_))
+        
+        if len(detections_) == 0:
+            track_ids = mot_tracker.update(np.empty((0, 5)))  # Handle no detections
+        else:
+            track_ids = mot_tracker.update(np.asarray(detections_))
 
         license_plates = licence_plate_detector(frame)[0]
         for license_plate in license_plates.boxes.data.tolist():
@@ -113,11 +114,15 @@ def process_video(video_path):
 
                 license_plate_text, license_plate_score = read_license_plate(license_plate_crop_thresh)
                 if license_plate_text:
-                    results[frame_nmr][car_id] = {'car': {'bbox': [xcar1, ycar1, xcar2, ycar2]},
-                                                  'license_plate': {'bbox': [x1, y1, x2, y2],
-                                                                    'text': license_plate_text,
-                                                                    'bbox_score': score,
-                                                                    'text_score': license_plate_score}}
+                    if (license_plate_text not in highest_confidence_plates) or (highest_confidence_plates[license_plate_text]['text_score'] < license_plate_score):
+                        highest_confidence_plates[license_plate_text] = {
+                            'frame_nmr': frame_nmr,
+                            'car_id': car_id,
+                            'car_bbox': [xcar1, ycar1, xcar2, ycar2],
+                            'license_plate_bbox': [x1, y1, x2, y2],
+                            'bbox_score': score,
+                            'text_score': license_plate_score
+                        }
                     # Draw bounding box for the car
                     cv2.rectangle(frame, (int(xcar1), int(ycar1)), (int(xcar2), int(ycar2)), (255, 0, 0), 2)
                     # Draw bounding box for the license plate
@@ -130,6 +135,19 @@ def process_video(video_path):
     cap.release()
     out.release()
 
+    # Process highest confidence plates into results
+    for plate, info in highest_confidence_plates.items():
+        frame_nmr = info['frame_nmr']
+        car_id = info['car_id']
+        if frame_nmr not in results:
+            results[frame_nmr] = {}
+        results[frame_nmr][car_id] = {
+            'car': {'bbox': info['car_bbox']},
+            'license_plate': {'bbox': info['license_plate_bbox'], 'text': plate, 'bbox_score': info['bbox_score'], 'text_score': info['text_score']}
+        }
+
     csv_path = 'temp/test.csv'
     write_csv(results, csv_path)
-    return csv_path, 'output_video2.mp4'
+
+    unique_license_numbers = list(highest_confidence_plates.keys())
+    return csv_path, 'output_video3.mp4', unique_license_numbers

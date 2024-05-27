@@ -392,7 +392,7 @@ def get_vehicle_info(registration_number):
     url = "https://rto-vehicle-information-verification-india.p.rapidapi.com/api/v1/rc/vehicleinfo"
     headers = {
         "content-type": "application/json",
-        "X-RapidAPI-Key": "56d0a4ae12mshe8145978a31952ap16f064jsn69aaa462c8bf",
+        "X-RapidAPI-Key": "02804354d9mshe9359843b45764fp1d91f2jsna8e8c77061d3",
         "X-RapidAPI-Host": "rto-vehicle-information-verification-india.p.rapidapi.com"
     }
     payload = {
@@ -434,29 +434,41 @@ get_vehicle_info(registration_number)
 def main():
     print("Automated Road Compliance and Enforcement System")
     
-    mode = input("Select Mode (Upload Video / Real-Time Video): ").strip().lower()
+    mode = input("Select Mode (Upload Video (1)/ Real-Time Video(0)): ").strip().lower()
 
-    if mode == "upload video":
+    if mode == "1":
         video_path = input("Enter the path to the video file: ").strip()
         if video_path:
             print('Processing video...')
-            results_csv = process_video(video_path)
+            results_csv, output_video_path, unique_license_numbers = process_video(video_path)
             print("License plate details extracted successfully!")
             print("Results saved to:", results_csv)
-            display_vehicle_details(results_csv)
-    elif mode == "real-time video":
+            for license_plate_number in unique_license_numbers:
+                get_vehicle_info(license_plate_number)
+                print("\n")
+                print("\n")
+            # display_vehicle_details(results_csv)
+    elif mode == "0":
         record = input('Press Enter to start recording (Recording will stop automatically after 20 seconds): ').strip()
         if record == '':
             print("Recording...")
             with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_video:
                 record_video(temp_video.name, 20)
                 print('Processing video...')
-                results_csv = process_video(temp_video)
+                results_csv, output_video_path, unique_license_numbers = process_video(temp_video.name)
+
                 print("License plate details extracted successfully!")
                 print("Results saved to:", results_csv)
-                display_vehicle_details(results_csv)
+                for license_plate_number in unique_license_numbers:
+                    print(unique_license_numbers)
+                    print("\n")
+                    get_vehicle_info(license_plate_number)
+                    print("\n")
+                    print("\n")
+                # display_vehicle_details(results_csv)
     else:
         print("Invalid mode selected. Please choose either 'Upload Video' or 'Real-Time Video'.")
+
 
 def display_vehicle_details(results_paths):
     csv_path, video_path = results_paths
